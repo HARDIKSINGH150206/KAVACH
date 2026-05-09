@@ -49,7 +49,10 @@ def dataset_status(
     # Prefer the largest available labeled corpus so readiness reflects the
     # actual training-grade dataset instead of tiny seed fixtures.
     candidates = [
-        (ROOT / "backend" / "data" / "phishing_sms_augmented.csv", ROOT / "backend" / "data" / "legit_sms_augmented.csv"),
+        (
+            ROOT / "backend" / "data" / "phishing_sms_augmented.csv",
+            ROOT / "backend" / "data" / "legit_sms_augmented.csv",
+        ),
         (phishing_csv, legit_csv),
     ]
 
