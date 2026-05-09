@@ -1,0 +1,32 @@
+{
+  "assets": [
+    {
+      "name": "sms_classifier",
+      "path": "backend/models/sms_classifier.pkl",
+      "required": true,
+      "status": "ready",
+      "note": "Train with scripts/train_sms_classifier.py if missing."
+    },
+    {
+      "name": "aasist",
+      "path": "backend/models/aasist_checkpoint",
+      "required": false,
+      "status": "ready",
+      "note": "Download with --download-aasist or place a compatible AASIST checkpoint here."
+    },
+    {
+      "name": "whisper",
+      "path": "backend/models/whisper",
+      "required": false,
+      "status": "ready",
+      "note": "Optional STT asset cache; runtime transcription uses it when openai-whisper is installed."
+    },
+    {
+      "name": "muril",
+      "path": "backend/models/muril",
+      "required": false,
+      "status": "ready",
+      "note": "Optional HuggingFace model cache; MuRIL is not wired into runtime yet."
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+"""Dual-vector fusion engine."""

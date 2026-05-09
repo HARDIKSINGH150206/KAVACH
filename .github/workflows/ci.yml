@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -e ".[dev]"
+      - name: Check readiness
+        run: python scripts/check_readiness.py
+      - name: Lint backend
+        run: ruff check backend scripts tests
+      - name: Check formatting
+        run: black --check backend scripts tests
+      - name: Run backend tests
+        run: pytest tests/ -v --cov=backend --cov=scripts --cov-report=term-missing
+      - name: Enforce SMS adversarial threshold
+        run: python scripts/evaluate_sms_classifier.py --strict --min-adversarial-accuracy 0.75
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        run: npm --prefix frontend ci
+      - name: Build frontend
+        run: npm --prefix frontend run build

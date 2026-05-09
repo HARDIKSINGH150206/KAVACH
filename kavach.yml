@@ -1,0 +1,23 @@
+audio_source: mic
+fusion:
+  audio_weight: 0.55
+  sms_weight: 0.45
+  transcript_weight: 0.20
+  thresholds:
+    suspicious: 0.30
+    high: 0.55
+    critical: 0.80
+models:
+  aasist_checkpoint_dir: backend/models/aasist_checkpoint
+  sms_classifier: backend/models/sms_classifier.pkl
+  muril_enabled: false
+logging:
+  level: INFO
+  directory: logs
+  threat_events_file: threat_events.jsonl
+security:
+  auth_mode: "none"
+  api_key: ""
+  bearer_token: ""
+  rate_limit_per_minute: 120
+cors_origins: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"

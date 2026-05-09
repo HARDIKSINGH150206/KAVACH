@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+*.egg-info/
+kavach-env/
+.venv/
+venv/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+npm-debug.log*
+
+# Environment and local files
+.env
+.env.*
+!.env.example
+*.log
+logs/
+backend/models/aasist_checkpoint/
+backend/models/whisper/
+backend/models/muril/
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,24 @@
+{
+  "cases": [
+    {
+      "id": "adv_legit_account_credit",
+      "text": "HDFCBK: Your account XX4321 is credited with Rs.15,000. Available balance updated.",
+      "expected_label": 0
+    },
+    {
+      "id": "adv_phish_otp_threat",
+      "text": "CBI case file opened against you. Share OTP immediately to avoid arrest.",
+      "expected_label": 1
+    },
+    {
+      "id": "adv_phish_challan_payment",
+      "text": "Vehicle MH12AB1234 e-challan pending. Pay now at http://bit.ly/challan77",
+      "expected_label": 1
+    },
+    {
+      "id": "adv_legit_delivery_update",
+      "text": "Your package is out for delivery and will arrive by 6 PM today.",
+      "expected_label": 0
+    }
+  ]
+}
