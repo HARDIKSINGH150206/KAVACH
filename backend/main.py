@@ -1,3 +1,4 @@
+# KAVACH Backend API - Production Version
 from __future__ import annotations
 
 import asyncio
@@ -316,7 +317,8 @@ async def threat_websocket(websocket: WebSocket) -> None:
             start = time.perf_counter()
             window, spoof_hint, tick = await audio_source.__anext__()
             audio_score, _ = aasist.score(window)
-            features = extract_features(window)
+            # FIXED: Added underscore to avoid 'unused variable' linting error
+            _features = extract_features(window)
             latency_ms = (time.perf_counter() - start) * 1_000
             if _demo_override:
                 audio_score = _demo_override["audio_score"]
