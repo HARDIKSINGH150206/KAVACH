@@ -1,4 +1,3 @@
-import React from 'react';
 import { PhoneCall, Globe, Heart } from 'lucide-react';
 
 export default function Footer() {

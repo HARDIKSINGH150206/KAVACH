@@ -1,4 +1,4 @@
-audio_source: mic
+audio_source: demo
 fusion:
   audio_weight: 0.55
   sms_weight: 0.45
@@ -20,4 +20,5 @@ security:
   api_key: ""
   bearer_token: ""
   rate_limit_per_minute: 120
+  allow_demo_controls: true
 cors_origins: "http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173"

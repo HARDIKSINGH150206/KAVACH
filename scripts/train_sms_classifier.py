@@ -19,8 +19,8 @@ if str(ROOT) not in sys.path:
 
 from backend.sms.evaluation import classification_metrics, profile_dataset
 
-DEFAULT_PHISHING_CSV = ROOT / "backend" / "data" / "phishing_sms.csv"
-DEFAULT_LEGIT_CSV = ROOT / "backend" / "data" / "legit_sms.csv"
+DEFAULT_PHISHING_CSV = ROOT / "backend" / "data" / "phishing_sms_augmented.csv"
+DEFAULT_LEGIT_CSV = ROOT / "backend" / "data" / "legit_sms_augmented.csv"
 DEFAULT_OUTPUT = ROOT / "backend" / "models" / "sms_classifier.pkl"
 DEFAULT_SPLIT_OUTPUT = ROOT / "backend" / "models" / "sms_split.json"
 

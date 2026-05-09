@@ -1,4 +1,3 @@
-import React from 'react';
 import { ChevronDown } from 'lucide-react';
 
 export default function SmsThreatFeed({ smsEvents = [] }) {
@@ -38,7 +37,7 @@ export default function SmsThreatFeed({ smsEvents = [] }) {
         <div className="flex justify-between text-[10px] font-mono text-gray-400 flex-wrap gap-1">
           <div className="flex gap-2">
             <span className="bg-[#222] px-1 rounded">Terminal: Metadata</span>
-            <span className="bg-[#222] px-1 rounded">BasK15S:26H</span>
+            <span className="bg-[#222] px-1 rounded">source: {latestSms.ml_source || 'unknown'}</span>
           </div>
           <span className="whitespace-nowrap">Top Tags</span>
         </div>
@@ -49,7 +48,7 @@ export default function SmsThreatFeed({ smsEvents = [] }) {
         </div>
         
         <div className="flex justify-between text-[10px] font-mono text-gray-500 mt-1">
-          <span>Message: 0.358:101.. HINI</span>
+          <span>Message timestamp: {latestSms.timestamp ? new Date(latestSms.timestamp * 1000).toLocaleTimeString() : 'N/A'}</span>
           <span>Metadata Tags</span>
         </div>
         

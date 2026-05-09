@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, UserPlus, FileBarChart, LayoutDashboard } from 'lucide-react';
 

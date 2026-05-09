@@ -1,6 +1,8 @@
 from dataclasses import replace
 
+import pytest
 from fastapi.testclient import TestClient
+from starlette.websockets import WebSocketDisconnect
 
 import backend.main as main_mod
 from backend.audio.capture import synthetic_window
@@ -157,6 +159,39 @@ def test_ws_threat_stream_emits_events() -> None:
 
         third = websocket.receive_json()
         assert third["type"] in {"audio", "sms", "fusion", "transcript"}
+        websocket.close()
+
+
+def test_demo_controls_disabled_blocks_mutating_demo_endpoints(monkeypatch) -> None:
+    secured = replace(
+        main_mod.APP_CONFIG,
+        security=replace(main_mod.APP_CONFIG.security, allow_demo_controls=False),
+    )
+    monkeypatch.setattr(main_mod, "APP_CONFIG", secured)
+
+    mock_resp = client.post("/sms/mock", json={"text": "test"})
+    scenario_resp = client.post("/demo/scenario", json={"scenario": "safe"})
+
+    assert mock_resp.status_code == 403
+    assert scenario_resp.status_code == 403
+
+
+def test_websocket_rejects_missing_api_key_when_configured(monkeypatch) -> None:
+    main_mod._rate_limit_windows.clear()
+    secured = replace(
+        main_mod.APP_CONFIG,
+        security=replace(main_mod.APP_CONFIG.security, auth_mode="api_key", api_key="kavach-secret"),
+    )
+    monkeypatch.setattr(main_mod, "APP_CONFIG", secured)
+
+    with pytest.raises(WebSocketDisconnect) as exc:
+        with client.websocket_connect("/ws/threat"):
+            pass
+    assert exc.value.code == 1008
+
+    with client.websocket_connect("/ws/threat", headers={"x-api-key": "kavach-secret"}) as websocket:
+        first = websocket.receive_json()
+        assert first["type"] in {"audio", "sms", "fusion", "transcript"}
         websocket.close()
 
 

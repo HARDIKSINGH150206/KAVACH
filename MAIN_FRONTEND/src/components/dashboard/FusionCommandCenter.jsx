@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function FusionCommandCenter({ score = 0.87, audioScore = 0.81, smsScore = 0.82, config = null }) {
   // Use backend config weights if available, else defaults
   const audioWeight = config?.audio_weight || 0.55;

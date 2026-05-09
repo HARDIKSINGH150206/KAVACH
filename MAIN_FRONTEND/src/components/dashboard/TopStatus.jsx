@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertTriangle, Heart, ShieldCheck, Cpu } from 'lucide-react';
 
 export default function TopStatus() {

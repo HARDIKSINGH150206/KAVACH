@@ -54,6 +54,10 @@ fusion:
   transcript_weight: 0.20
 logging:
   level: INFO
+security:
+  auth_mode: bearer
+  bearer_token: "<set-strong-token>"
+  allow_demo_controls: false
 ```
 
 ### 4. Start Services
@@ -65,6 +69,15 @@ logging:
 # Or run directly
 uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```
+
+For secure startup profiles:
+
+```bash
+./scripts/run_profile.sh pilot
+./scripts/run_profile.sh prod
+```
+
+`pilot` and `prod` profiles disable demo control endpoints by default.
 
 ## Production Deployment
 
@@ -171,6 +184,20 @@ ws.onmessage = (event) => {
 curl http://localhost:8000/api/v1/health
 ```
 
+### Post-Deploy Smoke Check
+
+Run the repository smoke check after backend/frontend start:
+
+```bash
+./scripts/smoke_check.sh
+```
+
+You can override target URLs:
+
+```bash
+BACKEND_URL=http://127.0.0.1:8000 FRONTEND_URL=http://127.0.0.1:5175 ./scripts/smoke_check.sh
+```
+
 ### Logs
 
 Logs are written to `logs/threat_events.jsonl`:
@@ -191,14 +218,19 @@ Monitor these endpoints:
 1. **Network Security**
    - Run behind reverse proxy
    - Use HTTPS in production
-   - Restrict API access with authentication
+   - Restrict API access with authentication (`api_key` or `bearer`)
 
-2. **Audio Privacy**
+2. **Runtime Security Defaults**
+   - Keep `KAVACH_AUTH_MODE` as `api_key` or `bearer` in non-demo deployments
+   - Set `KAVACH_ALLOW_DEMO_CONTROLS=false` outside local demo runs
+   - Scope `KAVACH_CORS_ORIGINS` to trusted frontend origins only
+
+3. **Audio Privacy**
    - Audio data is processed locally
    - No audio sent to external services
    - Configure appropriate audio sources
 
-3. **Model Security**
+4. **Model Security**
    - Models run locally, no external API calls
    - Validate model integrity on startup
    - Keep models updated

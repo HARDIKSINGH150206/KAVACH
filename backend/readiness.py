@@ -46,6 +46,29 @@ def dataset_status(
     phishing_csv: Path = DEFAULT_PHISHING_CSV,
     legit_csv: Path = DEFAULT_LEGIT_CSV,
 ) -> dict[str, Any]:
+    # Prefer the largest available labeled corpus so readiness reflects the
+    # actual training-grade dataset instead of tiny seed fixtures.
+    candidates = [
+        (ROOT / "backend" / "data" / "phishing_sms_augmented.csv", ROOT / "backend" / "data" / "legit_sms_augmented.csv"),
+        (phishing_csv, legit_csv),
+    ]
+
+    selected_pair = None
+    selected_size = -1
+    for p_csv, l_csv in candidates:
+        if not p_csv.exists() or not l_csv.exists():
+            continue
+        try:
+            size = p_csv.stat().st_size + l_csv.stat().st_size
+        except OSError:
+            continue
+        if size > selected_size:
+            selected_size = size
+            selected_pair = (p_csv, l_csv)
+
+    if selected_pair:
+        phishing_csv, legit_csv = selected_pair
+
     try:
         data = load_training_data(phishing_csv, legit_csv)
         profile = profile_dataset(data).to_dict()
@@ -63,6 +86,7 @@ def dataset_status(
         "state": profile["readiness_level"],
         "phishing_csv": str(phishing_csv.relative_to(ROOT)),
         "legit_csv": str(legit_csv.relative_to(ROOT)),
+        "dataset_source": "augmented" if "augmented" in phishing_csv.name else "seed",
         **profile,
     }
 
@@ -129,6 +153,14 @@ def readiness_report(config: AppConfig) -> dict[str, Any]:
         blocking.append("Required model assets are missing.")
 
     dataset = dataset_status()
+    sms_runtime_status = {}
+    try:
+        from backend.sms.classifier import sms_model_status
+
+        sms_runtime_status = sms_model_status()
+    except Exception:
+        sms_runtime_status = {"backend": "unknown", "model_state": "unknown"}
+
     return {
         "state": "ready" if not blocking else "attention_required",
         "blocking": blocking,
@@ -136,6 +168,7 @@ def readiness_report(config: AppConfig) -> dict[str, Any]:
         "dependencies": dependencies,
         "models": assets,
         "dataset": dataset,
+        "runtime_sms_model": sms_runtime_status,
         "frontend": frontend_status(),
         "config": config_status(config),
     }

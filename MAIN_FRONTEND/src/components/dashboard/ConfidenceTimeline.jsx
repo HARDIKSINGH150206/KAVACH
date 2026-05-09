@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function ConfidenceTimeline({ history = [] }) {
   // Default points to a flat safe line if no data
   let points = "0,150 500,150";

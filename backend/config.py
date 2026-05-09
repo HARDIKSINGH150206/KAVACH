@@ -45,6 +45,7 @@ class SecurityConfig:
     api_key: str = ""
     bearer_token: str = ""
     rate_limit_per_minute: int = 120
+    allow_demo_controls: bool = True
 
 
 @dataclass(frozen=True)
@@ -134,6 +135,10 @@ def load_config(path: Path = DEFAULT_CONFIG_PATH) -> AppConfig:
             rate_limit_per_minute=int(
                 os.getenv("KAVACH_RATE_LIMIT_PER_MINUTE", security_data.get("rate_limit_per_minute", 120))
             ),
+            allow_demo_controls=str(
+                os.getenv("KAVACH_ALLOW_DEMO_CONTROLS", security_data.get("allow_demo_controls", True))
+            ).lower()
+            in {"1", "true", "yes", "on"},
         ),
         cors_origins=cors_origins,
     )

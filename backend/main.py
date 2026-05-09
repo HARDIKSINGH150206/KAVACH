@@ -86,6 +86,45 @@ _rate_limit_windows: dict[str, deque[float]] = defaultdict(deque)
 _metrics = {"http_requests_total": 0, "http_4xx_total": 0, "http_5xx_total": 0}
 
 
+def _authenticate_request(request: Request) -> JSONResponse | None:
+    auth_mode = APP_CONFIG.security.auth_mode
+    if auth_mode == "api_key":
+        api_key = APP_CONFIG.security.api_key
+        supplied = request.headers.get("x-api-key", "")
+        if not api_key or supplied != api_key:
+            _metrics["http_requests_total"] += 1
+            _metrics["http_4xx_total"] += 1
+            return JSONResponse(status_code=401, content={"detail": "invalid API key"})
+    elif auth_mode == "bearer":
+        token = APP_CONFIG.security.bearer_token
+        auth_header = request.headers.get("authorization", "")
+        expected = f"Bearer {token}" if token else ""
+        if not token or auth_header != expected:
+            _metrics["http_requests_total"] += 1
+            _metrics["http_4xx_total"] += 1
+            return JSONResponse(status_code=401, content={"detail": "invalid bearer token"})
+    return None
+
+
+def _rate_limit_key(host: str | None) -> str:
+    return host if host else "unknown"
+
+
+def _check_rate_limit(bucket_key: str) -> JSONResponse | None:
+    limit = max(1, APP_CONFIG.security.rate_limit_per_minute)
+    now = time.time()
+    window_start = now - 60.0
+    bucket = _rate_limit_windows[bucket_key]
+    while bucket and bucket[0] < window_start:
+        bucket.popleft()
+    if len(bucket) >= limit:
+        _metrics["http_requests_total"] += 1
+        _metrics["http_4xx_total"] += 1
+        return JSONResponse(status_code=429, content={"detail": "rate limit exceeded"})
+    bucket.append(now)
+    return None
+
+
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     global _pump_task
@@ -126,41 +165,15 @@ async def security_middleware(request: Request, call_next):
         response.headers["x-request-id"] = request_id
         return response
 
-    auth_mode = APP_CONFIG.security.auth_mode
-    if auth_mode == "api_key":
-        api_key = APP_CONFIG.security.api_key
-        supplied = request.headers.get("x-api-key", "")
-        if not api_key or supplied != api_key:
-            _metrics["http_requests_total"] += 1
-            _metrics["http_4xx_total"] += 1
-            return JSONResponse(
-                status_code=401, content={"detail": "invalid API key"}, headers={"x-request-id": request_id}
-            )
-    elif auth_mode == "bearer":
-        token = APP_CONFIG.security.bearer_token
-        auth_header = request.headers.get("authorization", "")
-        expected = f"Bearer {token}" if token else ""
-        if not token or auth_header != expected:
-            _metrics["http_requests_total"] += 1
-            _metrics["http_4xx_total"] += 1
-            return JSONResponse(
-                status_code=401, content={"detail": "invalid bearer token"}, headers={"x-request-id": request_id}
-            )
+    auth_error = _authenticate_request(request)
+    if auth_error:
+        auth_error.headers["x-request-id"] = request_id
+        return auth_error
 
-    limit = max(1, APP_CONFIG.security.rate_limit_per_minute)
-    bucket_key = request.client.host if request.client else "unknown"
-    now = time.time()
-    window_start = now - 60.0
-    bucket = _rate_limit_windows[bucket_key]
-    while bucket and bucket[0] < window_start:
-        bucket.popleft()
-    if len(bucket) >= limit:
-        _metrics["http_requests_total"] += 1
-        _metrics["http_4xx_total"] += 1
-        return JSONResponse(
-            status_code=429, content={"detail": "rate limit exceeded"}, headers={"x-request-id": request_id}
-        )
-    bucket.append(now)
+    rate_error = _check_rate_limit(_rate_limit_key(request.client.host if request.client else None))
+    if rate_error:
+        rate_error.headers["x-request-id"] = request_id
+        return rate_error
 
     response = await call_next(request)
     _metrics["http_requests_total"] += 1
@@ -283,6 +296,8 @@ async def score_fusion_endpoint(payload: ScoreFusionRequest) -> FusionEvent:
 @app.post("/sms/mock")
 @app.post("/api/v1/sms/mock")
 async def mock_sms(payload: MockSmsRequest) -> MockSmsResponse:
+    if not APP_CONFIG.security.allow_demo_controls:
+        raise HTTPException(status_code=403, detail="demo controls disabled")
     text = payload.text.strip()
     if not text:
         return MockSmsResponse(accepted=False, error="text is required")
@@ -293,6 +308,8 @@ async def mock_sms(payload: MockSmsRequest) -> MockSmsResponse:
 @app.post("/demo/scenario")
 @app.post("/api/v1/demo/scenario")
 async def demo_scenario(payload: DemoScenarioRequest) -> DemoScenarioResponse:
+    if not APP_CONFIG.security.allow_demo_controls:
+        raise HTTPException(status_code=403, detail="demo controls disabled")
     global _demo_override
     scenario = payload.scenario
     if scenario not in DEMO_SCENARIOS:
@@ -305,6 +322,26 @@ async def demo_scenario(payload: DemoScenarioRequest) -> DemoScenarioResponse:
 
 @app.websocket("/ws/threat")
 async def threat_websocket(websocket: WebSocket) -> None:
+    auth_mode = APP_CONFIG.security.auth_mode
+    if auth_mode == "api_key":
+        required = APP_CONFIG.security.api_key
+        supplied = websocket.headers.get("x-api-key", "")
+        if not required or supplied != required:
+            await websocket.close(code=1008, reason="invalid API key")
+            return
+    elif auth_mode == "bearer":
+        required = APP_CONFIG.security.bearer_token
+        auth_header = websocket.headers.get("authorization", "")
+        expected = f"Bearer {required}" if required else ""
+        if not required or auth_header != expected:
+            await websocket.close(code=1008, reason="invalid bearer token")
+            return
+
+    rate_error = _check_rate_limit(_rate_limit_key(websocket.client.host if websocket.client else None))
+    if rate_error:
+        await websocket.close(code=1008, reason="rate limit exceeded")
+        return
+
     await websocket.accept()
     audio_score = -1.0
     sms_score = -1.0

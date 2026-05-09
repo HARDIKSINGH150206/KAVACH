@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useKavachBackend } from './hooks/useKavachBackend';
 import LiveSpectrogram from './components/dashboard/LiveSpectrogram';
 import ConfidenceTimeline from './components/dashboard/ConfidenceTimeline';
@@ -8,16 +8,17 @@ import DemoControls from './components/dashboard/DemoControls';
 import LandingPage from './components/LandingPage';
 import { Shield, AlertTriangle, Cpu } from 'lucide-react';
 
-function App() {
-  const [showDashboard, setShowDashboard] = useState(false);
-  const { config, health, threatEvents, isConnected } = useKavachBackend();
+const DASHBOARD_PATH = '/dashboard';
 
-  if (!showDashboard) {
-    return <LandingPage onLaunch={() => setShowDashboard(true)} />;
-  }
+function currentPath() {
+  if (typeof window === 'undefined') return '/';
+  return window.location.pathname || '/';
+}
+
+function DashboardShell() {
+  const { config, health, threatEvents, isConnected, backendReady } = useKavachBackend();
   const [gpuLatency, setGpuLatency] = useState(72);
 
-  // Flutter GPU latency between 68 and 78 ms to simulate live metrics
   useEffect(() => {
     const interval = setInterval(() => {
       setGpuLatency(Math.floor(Math.random() * (78 - 68 + 1)) + 68);
@@ -32,10 +33,23 @@ function App() {
   
   const latestAudio = threatEvents.audio.length > 0 ? threatEvents.audio[0] : null;
   const ganDetected = latestAudio ? latestAudio.spoof_hint : false;
-  const audioScore = latestAudio ? latestAudio.audio_score : 0.12;
+  const audioScore = latestAudio ? latestAudio.audio_score : 0.0;
 
   const latestSmsEvent = threatEvents.sms.length > 0 ? threatEvents.sms[0] : null;
-  const smsScore = latestSmsEvent ? latestSmsEvent.sms_score : 0.05;
+  const smsScore = latestSmsEvent ? latestSmsEvent.sms_score : 0.0;
+  const backendMode = health?.mode?.toUpperCase() || 'UNKNOWN';
+  const readinessState = health?.readiness?.state || 'unknown';
+  const showOffline = !backendReady || !isConnected;
+
+  if (!backendReady) {
+    return (
+      <div className="h-screen w-screen bg-kavach-bg text-gray-200 flex items-center justify-center font-mono">
+        <div className="border border-[#333] bg-[#111] px-6 py-4 text-sm">
+          Waiting for backend readiness...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`h-screen w-screen overflow-hidden flex flex-col p-4 font-sans selection:bg-threat-red/30 selection:text-white transition-all duration-700 ${isCritical ? 'bg-[#150000] text-gray-200' : 'bg-kavach-bg text-gray-200'}`}>
@@ -61,7 +75,7 @@ function App() {
         </div>
         
         <div className="flex items-center gap-4">
-          {!isConnected && (
+          {showOffline && (
             <span className="text-threat-red text-xs font-mono animate-pulse">WS Disconnected</span>
           )}
           
@@ -73,7 +87,7 @@ function App() {
           </div>
 
           <span className="text-safe-green font-mono text-xs font-bold bg-[#064e3b] px-3 py-1 rounded border border-[#10b981]/30">
-            MHA/CERT-In Integration: ACTIVE
+            BACKEND: {backendMode} / {readinessState.toUpperCase()}
           </span>
         </div>
       </nav>
@@ -85,7 +99,7 @@ function App() {
         <div className="lg:col-span-7 flex flex-col gap-4 h-full overflow-hidden">
           {/* Top Half: Spectrogram */}
           <div className="flex-1 min-h-0 overflow-hidden">
-            <LiveSpectrogram transcripts={threatEvents.transcript} ganDetected={ganDetected} />
+            <LiveSpectrogram transcripts={threatEvents.transcript} ganDetected={ganDetected} audioScore={audioScore} />
           </div>
           
           {/* Bottom Half: Timeline */}
@@ -134,6 +148,31 @@ function App() {
       </main>
     </div>
   );
+}
+
+function App() {
+  const [path, setPath] = useState(currentPath);
+
+  useEffect(() => {
+    const onPopState = () => {
+      setPath(currentPath());
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  const launchDashboard = () => {
+    if (currentPath() !== DASHBOARD_PATH) {
+      window.history.pushState({}, '', DASHBOARD_PATH);
+    }
+    setPath(DASHBOARD_PATH);
+  };
+
+  if (path !== DASHBOARD_PATH) {
+    return <LandingPage onLaunch={launchDashboard} />;
+  }
+
+  return <DashboardShell />;
 }
 
 export default App;

@@ -13,8 +13,9 @@ def test_dataset_status_marks_seed_data_incomplete() -> None:
     status = dataset_status()
 
     assert status["state"] == "seed_or_incomplete"
-    assert status["phishing_examples"] < 5_000
-    assert status["legit_examples"] < 2_500
+    assert status["dataset_source"] in {"seed", "augmented"}
+    assert status["phishing_examples"] >= 15
+    assert status["legit_examples"] >= 15
 
 
 def test_frontend_status_reports_package_files() -> None:
@@ -32,5 +33,6 @@ def test_readiness_report_includes_major_sections() -> None:
     assert "dependencies" in report
     assert "models" in report
     assert "dataset" in report
+    assert "runtime_sms_model" in report
     assert "frontend" in report
     assert "config" in report

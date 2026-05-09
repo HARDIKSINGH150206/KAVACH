@@ -1,7 +1,14 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Stethoscope, Activity } from 'lucide-react';
-import { cn } from '../lib/utils';
+
+const pulseDots = [
+  { top: '18%', left: '18%', duration: 3.2 },
+  { top: '72%', left: '22%', duration: 4.1 },
+  { top: '28%', left: '41%', duration: 3.6 },
+  { top: '64%', left: '58%', duration: 4.4 },
+  { top: '26%', left: '74%', duration: 3.8 },
+  { top: '78%', left: '82%', duration: 4.0 },
+];
 
 export default function HeroSection() {
   return (
@@ -22,13 +29,13 @@ export default function HeroSection() {
         </svg>
 
         {/* Glowing Pulse Dots */}
-        {[...Array(6)].map((_, i) => (
+        {pulseDots.map((dot, i) => (
           <motion.div
             key={i}
             className="absolute w-3 h-3 bg-teal-400 rounded-full"
             style={{
-              top: `${Math.random() * 80 + 10}%`,
-              left: `${Math.random() * 80 + 10}%`,
+              top: dot.top,
+              left: dot.left,
               boxShadow: '0 0 15px 4px rgba(0, 198, 167, 0.4)'
             }}
             animate={{
@@ -36,7 +43,7 @@ export default function HeroSection() {
               opacity: [0.5, 1, 0.5],
             }}
             transition={{
-              duration: 3 + Math.random() * 2,
+              duration: dot.duration,
               repeat: Infinity,
               ease: "easeInOut"
             }}

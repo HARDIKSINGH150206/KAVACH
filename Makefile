@@ -2,7 +2,7 @@ VENV ?= kavach-env
 PYTHON ?= $(VENV)/bin/python
 NPM ?= npm
 
-.PHONY: install install-dev frontend test lint format docker-build compose-up start stop status readiness profile-demo profile-pilot profile-prod pilot-gate
+.PHONY: install install-dev frontend frontend-main test lint format docker-build compose-up smoke-check start stop status readiness profile-demo profile-pilot profile-prod pilot-gate live-demo
 
 install:
 	python -m venv $(VENV)
@@ -18,6 +18,9 @@ install-dev: install
 
 frontend:
 	$(NPM) --prefix frontend install
+
+frontend-main:
+	$(NPM) --prefix MAIN_FRONTEND install
 
 test:
 	$(PYTHON) -m pytest tests/ -v
@@ -37,6 +40,9 @@ docker-build:
 
 compose-up:
 	docker compose up --build
+
+smoke-check:
+	./scripts/smoke_check.sh
 
 start:
 	$(PYTHON) -m backend.cli start
@@ -61,3 +67,6 @@ profile-prod:
 
 pilot-gate:
 	$(PYTHON) scripts/pilot_gate.py
+
+live-demo:
+	./scripts/live_demo.sh

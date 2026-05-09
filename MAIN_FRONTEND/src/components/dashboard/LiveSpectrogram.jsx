@@ -1,14 +1,7 @@
-import React from 'react';
+const GRID_PATTERN_URL = `url("data:image/svg+xml,%3Csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='grid' width='4' height='4' patternUnits='userSpaceOnUse'%3E%3Cpath d='M 4 0 L 0 0 0 4' fill='none' stroke='rgba(255,255,255,0.05)' stroke-width='1'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23grid)' /%3E%3C/svg%3E")`;
 
-export default function LiveSpectrogram({ transcripts = [], ganDetected = false }) {
-  // Use mock transcripts if empty
-  const displayTranscripts = transcripts.length > 0 ? transcripts : [
-    { text: "Speaker 2: Sir, this is from CBI, urgent update..." },
-    { text: "Speaker 2: Sir, this is from CBI, urgent update..." },
-    { text: "Speaker 2: Sir, this is from CBI, urgent update..." },
-    { text: "Speaker 2: Sir, this is from CBI, urgent update..." },
-    { text: "Speaker 2: Sir, this is from CBI, urgent update..." },
-  ];
+export default function LiveSpectrogram({ transcripts = [], ganDetected = false, audioScore = 0.0 }) {
+  const displayTranscripts = transcripts.length > 0 ? transcripts : [];
 
   return (
     <div className={`kavach-panel flex flex-col h-full transition-colors duration-500 ${ganDetected ? 'border-threat-red/50 shadow-[0_0_20px_rgba(239,68,68,0.1)]' : ''}`}>
@@ -26,7 +19,7 @@ export default function LiveSpectrogram({ transcripts = [], ganDetected = false 
       
       <div className="p-4 flex-1 flex flex-col gap-3">
         <div className="text-xs font-mono text-gray-400 flex justify-between">
-          <span>AASIST 96%+ Accuracy | Live Audio Score: <span className={ganDetected ? "text-threat-red font-bold" : "text-safe-green"}>{ganDetected ? "0.81" : "0.12"}</span> | Whisper Transcribing... [Indian Accent]</span>
+          <span>AASIST runtime | Live Audio Score: <span className={ganDetected ? "text-threat-red font-bold" : "text-safe-green"}>{audioScore.toFixed(3)}</span> | Transcript stream</span>
         </div>
         
         {/* Spectrogram Mockup */}
@@ -42,8 +35,10 @@ export default function LiveSpectrogram({ transcripts = [], ganDetected = false 
           {/* Spectrogram Graphic (CSS gradient mockup) */}
           <div className="absolute inset-0 opacity-80" 
                style={{
-                 background: ganDetected ? 'linear-gradient(to top, rgba(239,68,68,0.2), transparent)' : 'linear-gradient(to top, rgba(16,185,129,0.1), transparent)',
-                 backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100%25\' height=\'100%25\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cdefs%3E%3Cpattern id=\'grid\' width=\'4\' height=\'4\' patternUnits=\'userSpaceOnUse\'%3E%3Cpath d=\'M 4 0 L 0 0 0 4\' fill=\'none\' stroke=\'rgba(255,255,255,0.05)\' stroke-width=\'1\'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width=\'100%25\' height=\'100%25\' fill=\'url(%23grid)\' /%3E%3C/svg%3E")'
+                 backgroundImage: `${ganDetected ? 'linear-gradient(to top, rgba(239,68,68,0.2), transparent)' : 'linear-gradient(to top, rgba(16,185,129,0.1), transparent)'}, ${GRID_PATTERN_URL}`,
+                 backgroundRepeat: 'no-repeat, repeat',
+                 backgroundSize: 'cover, auto',
+                 backgroundPosition: 'center, center',
                }}>
             {/* Fake wave peaks - CLI style (crisp, narrow bars) */}
             <div className="absolute bottom-0 w-full h-full flex items-end justify-around px-2 opacity-80 mix-blend-screen">
@@ -74,6 +69,9 @@ export default function LiveSpectrogram({ transcripts = [], ganDetected = false 
             <div className="w-full h-1/3 bg-gray-500 rounded-full mt-2"></div>
           </div>
           <div className="font-mono text-xs text-gray-300 leading-relaxed flex flex-col gap-1 overflow-y-auto h-full pr-3">
+            {displayTranscripts.length === 0 && (
+              <div className="text-gray-500">Waiting for transcript events...</div>
+            )}
             {displayTranscripts.map((t, i) => (
               <div key={i}>{t.text || JSON.stringify(t)}</div>
             ))}

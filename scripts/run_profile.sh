@@ -9,16 +9,19 @@ case "$PROFILE" in
   demo)
     export KAVACH_AUDIO_SOURCE=demo
     export KAVACH_AUTH_MODE=none
+    export KAVACH_ALLOW_DEMO_CONTROLS=true
     ;;
   pilot)
     export KAVACH_AUDIO_SOURCE=demo
     export KAVACH_AUTH_MODE=api_key
+    export KAVACH_ALLOW_DEMO_CONTROLS=false
     : "${KAVACH_API_KEY:=pilot-key}"
     export KAVACH_API_KEY
     ;;
   prod)
     export KAVACH_AUDIO_SOURCE=mic
     export KAVACH_AUTH_MODE=bearer
+    export KAVACH_ALLOW_DEMO_CONTROLS=false
     : "${KAVACH_BEARER_TOKEN:=prod-token}"
     export KAVACH_BEARER_TOKEN
     ;;

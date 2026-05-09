@@ -1,4 +1,3 @@
-import React from 'react';
 import { Shield, Cpu, Network, Lock, ChevronRight, Zap } from 'lucide-react';
 
 export default function LandingPage({ onLaunch }) {
@@ -67,15 +66,35 @@ export default function LandingPage({ onLaunch }) {
           </div>
 
           <div className="mt-12 w-full flex justify-center">
-            <button 
+            <button
+              type="button"
               onClick={onLaunch}
-              className="group relative px-8 py-4 bg-threat-red text-white font-bold tracking-widest uppercase flex items-center gap-3 overflow-hidden transition-all hover:bg-threat-red-dark hover:shadow-[0_0_30px_rgba(239,68,68,0.4)]"
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  onLaunch?.();
+                }
+              }}
+              className="group relative px-8 py-4 bg-threat-red text-white font-bold tracking-widest uppercase flex items-center gap-3 overflow-hidden transition-all hover:bg-threat-red-dark hover:shadow-[0_0_30px_rgba(239,68,68,0.4)] cursor-pointer focus:outline-none focus:ring-2 focus:ring-safe-green focus:ring-offset-2 focus:ring-offset-[#0a0a0a]"
+              aria-label="Open dashboard"
             >
-              <div className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+              <div className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none"></div>
               <Zap size={20} className="relative z-10" />
               <span className="relative z-10">Initialize Command Center</span>
               <ChevronRight size={20} className="relative z-10 group-hover:translate-x-1 transition-transform" />
             </button>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-xs text-gray-500">
+            <button
+              type="button"
+              onClick={onLaunch}
+              className="underline decoration-dotted underline-offset-4 hover:text-white transition-colors"
+            >
+              Open dashboard
+            </button>
+            <span className="hidden sm:inline">or press Enter when focused here</span>
+            <span className="sm:hidden">tap the launch button above</span>
           </div>
           
         </div>

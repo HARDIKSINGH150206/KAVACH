@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ShieldCheck, TriangleAlert, Siren, ShieldX, Send } from 'lucide-react';
 
 export default function DemoControls() {
@@ -24,7 +24,7 @@ export default function DemoControls() {
       
       if (!response.ok) throw new Error('Failed');
       setStatus(scenario === 'auto' ? 'Auto mode' : `${scenario.toUpperCase()} armed`);
-    } catch (e) {
+    } catch {
       setStatus('Error connecting');
     }
   }
@@ -52,7 +52,7 @@ export default function DemoControls() {
       if (!response.ok) throw new Error('Failed');
       setCustomSms("");
       setStatus('Custom SMS injected');
-    } catch (e) {
+    } catch {
       setStatus('Error injecting SMS');
     }
   }

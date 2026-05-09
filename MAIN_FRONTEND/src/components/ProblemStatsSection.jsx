@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { Users, AlertTriangle, Clock } from 'lucide-react';
 
@@ -35,7 +35,7 @@ const stats = [
 
 function Counter({ from, to, suffix, decimals = 0, duration = 2 }) {
   const [count, setCount] = useState(from);
-  const ref = React.useRef(null);
+  const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
 
   useEffect(() => {

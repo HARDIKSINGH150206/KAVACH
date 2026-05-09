@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { WifiOff, Languages, CalendarCheck, BookOpen, Shield, Smartphone } from 'lucide-react';
 

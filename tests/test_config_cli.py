@@ -52,6 +52,42 @@ def test_config_env_audio_source_override(tmp_path, monkeypatch) -> None:
     assert config.audio_source == "demo"
 
 
+def test_load_config_reads_security_allow_demo_controls(tmp_path, monkeypatch) -> None:
+    config_path = tmp_path / "kavach.yml"
+    config_path.write_text(
+        """
+security:
+  auth_mode: bearer
+  bearer_token: test-token
+  allow_demo_controls: false
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("KAVACH_ALLOW_DEMO_CONTROLS", raising=False)
+
+    config = load_config(config_path)
+
+    assert config.security.auth_mode == "bearer"
+    assert config.security.bearer_token == "test-token"
+    assert config.security.allow_demo_controls is False
+
+
+def test_security_allow_demo_controls_env_override(tmp_path, monkeypatch) -> None:
+    config_path = tmp_path / "kavach.yml"
+    config_path.write_text(
+        """
+security:
+  allow_demo_controls: false
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("KAVACH_ALLOW_DEMO_CONTROLS", "true")
+
+    config = load_config(config_path)
+
+    assert config.security.allow_demo_controls is True
+
+
 def test_cli_score_fusion_outputs_json(capsys, monkeypatch) -> None:
     monkeypatch.setattr(
         "sys.argv",

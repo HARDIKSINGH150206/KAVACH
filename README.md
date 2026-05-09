@@ -6,6 +6,9 @@ Real-time demo scaffold for a dual-vector fraud shield: audio deepfake scoring +
 
 KAVACH is a demo-ready prototype with strong local tooling, tests, and container support. It is not yet production-ready.
 
+Production-readiness execution is tracked in:
+- `DOCUMENTATION/PRODUCTION_PHASES.md`
+
 ### ✅ Completed Features
 - **Backend**: FastAPI with WebSocket streaming, audio processing, SMS classification, fusion engine
 - **Frontend**: React dashboard with real-time spectrogram, threat visualization, demo controls
@@ -14,6 +17,16 @@ KAVACH is a demo-ready prototype with strong local tooling, tests, and container
 - **CLI**: Start/stop commands with PID management
 - **Configuration**: YAML-based config with environment overrides
 - **Deployment**: Docker Compose, systemd service, Nginx reverse proxy docs
+
+### Live Demo
+
+Run the full demo stack with one command:
+
+```bash
+make live-demo
+```
+
+This starts the backend in demo mode and the integrated frontend at `http://localhost:5175`.
 
 ### 🔧 Technical Stack
 - **Backend**: Python 3.12, FastAPI, WebSocket, PyTorch, scikit-learn, librosa
@@ -45,23 +58,21 @@ pip install -r requirements.txt
 # Download models (optional)
 python3 scripts/download_models.py
 
-# Start server
-uvicorn backend.main:app --host 0.0.0.0 --port 8000
+# Start the live demo stack
+make live-demo
 ```
-
-Access dashboard at http://localhost:8000
 
 ## Current Execution Mode
 
 This implementation is runnable without large model downloads. It uses:
 
-- synthetic demo audio windows with heuristic artifact scoring through the future `AASISTScorer` interface
+- synthetic demo audio windows with AASIST-backed scoring and heuristic fallback through the `AASISTScorer` interface
 - `librosa` feature extraction for MFCC, delta MFCC, log-mel, f0, and raw waveform data
 - SMS scam rules, URL risk analysis, and a trained TF-IDF + logistic regression classifier
 - typed FastAPI REST/WebSocket payloads
 - React/Vite dashboard with demo controls, spectrogram, SMS feed, confidence timeline, and threat banner
 
-Production audio/NLP models are not wired yet. AASIST, Whisper, MuRIL, Android ingestion, and deployment packaging are still roadmap items.
+The audio detector is wired and will use a validated local AASIST checkpoint when present. Whisper and MuRIL remain optional, and Android ingestion is still roadmap work.
 
 ## Run Backend
 
@@ -123,12 +134,14 @@ Fusion now accepts audio, SMS, and optional transcript urgency signals. Missing 
 ## Run Frontend
 
 ```bash
-cd frontend
+cd MAIN_FRONTEND
 npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`.
+Open `http://localhost:5175`.
+
+Note: `frontend/` remains as legacy fallback UI. `MAIN_FRONTEND/` is the active integrated dashboard path.
 
 ## Docker
 
@@ -145,7 +158,7 @@ Or run the backend and frontend together with Docker Compose:
 docker compose up --build
 ```
 
-This exposes the backend on `http://localhost:8000` and the frontend on `http://localhost:5173`.
+This exposes the backend on `http://localhost:8000` and the main frontend on `http://localhost:5175`.
 
 ## Makefile
 
@@ -157,6 +170,8 @@ make test
 make lint
 make docker-build
 make compose-up
+make smoke-check
+make live-demo
 make start
 make stop
 make status
@@ -175,6 +190,7 @@ Start backend with profile defaults:
 ```
 
 `pilot` and `prod` profiles enable auth defaults suitable for controlled environments.
+`demo` is the right profile for live walkthroughs and demo rehearsals.
 
 ## CLI
 
@@ -187,6 +203,7 @@ The package includes a local CLI wrapper. From the repository root:
 ```
 
 The `start` command launches the backend with `uvicorn` in the background and writes a PID to `.kavach.pid`.
+For a full live demo, use `make live-demo` instead of starting backend and frontend separately.
 
 ## Tests
 
@@ -196,10 +213,16 @@ The `start` command launches the backend with `uvicorn` in the background and wr
 pytest tests/ -v
 ```
 
-### Frontend
+### Frontend (legacy fallback)
 
 ```bash
 cd frontend && npm run test -- --run
+```
+
+### Frontend (primary app)
+
+```bash
+cd MAIN_FRONTEND && npm run test -- --run
 ```
 
 ### All tests
@@ -239,7 +262,7 @@ Evaluate the checked-in model against the labeled CSVs with:
 ./kavach-env/bin/python scripts/audit_sms_dataset.py --output reports/sms_dataset_audit.json
 ```
 
-The current checked-in dataset is intentionally a small seed set. The evaluator reports dataset readiness and will continue marking it incomplete until it reaches the planned credible-prototype target of at least 5,000 phishing and 2,500 legitimate SMS examples.
+The readiness pipeline now prefers the augmented corpus when present (`phishing_sms_augmented.csv` and `legit_sms_augmented.csv`). Current readiness may still report incomplete if quality checks (for example duplicates) fail.
 
 ## Model Assets
 
@@ -263,7 +286,7 @@ Whisper and MuRIL downloads are optional hooks:
 ./kavach-env/bin/python scripts/download_models.py --download-muril
 ```
 
-AASIST checkpoint selection is still manual, and runtime audio scoring still uses the heuristic fallback until the AASIST wrapper is implemented.
+AASIST checkpoint selection is still manual, and runtime audio scoring uses the validated checkpoint when present with deterministic heuristic fallback otherwise.
 
 ## AASIST Status
 
