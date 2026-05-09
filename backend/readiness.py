@@ -7,7 +7,11 @@ from typing import Any
 from backend.config import ROOT, AppConfig
 from backend.sms.evaluation import profile_dataset
 from scripts.download_models import inspect_assets
-from scripts.train_sms_classifier import DEFAULT_LEGIT_CSV, DEFAULT_PHISHING_CSV, load_training_data
+from scripts.train_sms_classifier import (
+    DEFAULT_LEGIT_CSV,
+    DEFAULT_PHISHING_CSV,
+    load_training_data,
+)
 
 PYTHON_DEPENDENCIES = {
     "fastapi": "fastapi",
@@ -79,9 +83,15 @@ def dataset_status(
         return {
             "state": "unreadable",
             "phishing_csv": (
-                str(phishing_csv.relative_to(ROOT)) if phishing_csv.is_relative_to(ROOT) else str(phishing_csv)
+                str(phishing_csv.relative_to(ROOT))
+                if phishing_csv.is_relative_to(ROOT)
+                else str(phishing_csv)
             ),
-            "legit_csv": str(legit_csv.relative_to(ROOT)) if legit_csv.is_relative_to(ROOT) else str(legit_csv),
+            "legit_csv": (
+                str(legit_csv.relative_to(ROOT))
+                if legit_csv.is_relative_to(ROOT)
+                else str(legit_csv)
+            ),
             "error": str(exc),
         }
 
@@ -128,8 +138,12 @@ def config_status(config: AppConfig) -> dict[str, Any]:
 def readiness_report(config: AppConfig) -> dict[str, Any]:
     dependencies = dependency_status()
     assets = [asset.to_json() for asset in inspect_assets()]
-    required_assets_ready = all(asset["status"] == "ready" for asset in assets if asset["required"])
-    required_dependencies_ready = all(state == "ready" for state in dependencies.values())
+    required_assets_ready = all(
+        asset["status"] == "ready" for asset in assets if asset["required"]
+    )
+    required_dependencies_ready = all(
+        state == "ready" for state in dependencies.values()
+    )
     mic_dependencies_ready = dependencies.get("sounddevice") == "ready"
 
     blocking = []
@@ -137,7 +151,9 @@ def readiness_report(config: AppConfig) -> dict[str, Any]:
         if config.audio_source == "demo" and mic_dependencies_ready is False:
             # sounddevice is only required in mic mode
             blocking_dependencies_ready = all(
-                state == "ready" for name, state in dependencies.items() if name != "sounddevice"
+                state == "ready"
+                for name, state in dependencies.items()
+                if name != "sounddevice"
             )
             if not blocking_dependencies_ready:
                 blocking.append("One or more Python runtime dependencies are missing.")
@@ -146,10 +162,16 @@ def readiness_report(config: AppConfig) -> dict[str, Any]:
     if config.audio_source == "mic" and not mic_dependencies_ready:
         blocking.append("Microphone mode requires the sounddevice dependency.")
     if not blocking and config.audio_source == "demo" and not mic_dependencies_ready:
-        optional_warnings = ["Microphone mode is unavailable because sounddevice is not installed."]
+        optional_warnings = [
+            "Microphone mode is unavailable because sounddevice is not installed."
+        ]
     else:
         optional_warnings = []
-    if not blocking and required_dependencies_ready is False and config.audio_source == "demo":
+    if (
+        not blocking
+        and required_dependencies_ready is False
+        and config.audio_source == "demo"
+    ):
         # non-blocking demo mode can still report partial dependency state
         pass
     if not required_assets_ready:
